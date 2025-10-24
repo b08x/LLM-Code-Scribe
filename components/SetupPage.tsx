@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { providers, ProviderDetails } from '../config';
 import { IAiProviderConfig } from '../services/ai/provider';
@@ -123,41 +122,42 @@ export const SetupPage: React.FC<SetupPageProps> = ({ onConfigured }) => {
               {keyValidationError && <p className="text-red-400 mt-2 text-sm">{keyValidationError}</p>}
             </div>
 
-            {/* Step 2: Model & Parameters (conditional) */}
-            {isKeyValidated && (
-              <div className="border-t border-slate-700 pt-6 space-y-6 animate-fade-in">
-                <div>
-                  <label htmlFor="model-select" className="block text-lg font-semibold text-green-300 mb-2">3. Choose a Model</label>
-                  <select
-                    id="model-select"
-                    value={selectedModel}
-                    onChange={e => setSelectedModel(e.target.value)}
-                    className="w-full p-3 bg-slate-900 border border-slate-600 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  >
-                    {availableModels.map(model => <option key={model} value={model}>{model}</option>)}
-                  </select>
-                </div>
-
-                <div>
-                    <label htmlFor="temperature-slider" className="block text-lg font-semibold text-green-300 mb-2">
-                        4. Set Temperature <span className="text-slate-400 font-normal text-sm">(Creativity)</span>
-                    </label>
-                     <div className="flex items-center gap-4">
-                        <input
-                            id="temperature-slider"
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.1"
-                            value={temperature}
-                            onChange={e => setTemperature(parseFloat(e.target.value))}
-                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-                        />
-                        <span className="font-mono text-green-300 w-10 text-center">{temperature.toFixed(1)}</span>
-                    </div>
-                </div>
+            {/* Step 3 & 4: Model & Parameters */}
+            <div className="border-t border-slate-700 pt-6 space-y-6">
+              <div className={`transition-opacity duration-300 ${isKeyValidated ? 'opacity-100' : 'opacity-50'}`}>
+                <label htmlFor="model-select" className="block text-lg font-semibold text-green-300 mb-2">3. Choose a Model</label>
+                <select
+                  id="model-select"
+                  value={selectedModel}
+                  onChange={e => setSelectedModel(e.target.value)}
+                  className="w-full p-3 bg-slate-900 border border-slate-600 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:cursor-not-allowed disabled:text-slate-400"
+                  disabled={!isKeyValidated}
+                >
+                  {availableModels.map(model => <option key={model} value={model}>{model}</option>)}
+                </select>
+                {!isKeyValidated && <p className="text-xs text-slate-500 mt-1">Validate your API key to enable model selection.</p>}
               </div>
-            )}
+
+              <div className={`transition-opacity duration-300 ${isKeyValidated ? 'opacity-100' : 'opacity-50'}`}>
+                  <label htmlFor="temperature-slider" className="block text-lg font-semibold text-green-300 mb-2">
+                      4. Set Temperature <span className="text-slate-400 font-normal text-sm">(Creativity)</span>
+                  </label>
+                    <div className="flex items-center gap-4">
+                      <input
+                          id="temperature-slider"
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.1"
+                          value={temperature}
+                          onChange={e => setTemperature(parseFloat(e.target.value))}
+                          className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer disabled:cursor-not-allowed"
+                          disabled={!isKeyValidated}
+                      />
+                      <span className="font-mono text-green-300 w-10 text-center">{temperature.toFixed(1)}</span>
+                  </div>
+              </div>
+            </div>
           </div>
 
           <div className="mt-8 pt-6 border-t border-slate-700">

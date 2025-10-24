@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { getAiProvider } from './services/ai';
 import { IAiProvider, IAiProviderConfig, IChatSession } from './services/ai/provider';
@@ -209,7 +210,8 @@ const App: React.FC = () => {
     setChatHistory([]);
 
     try {
-      const gemsToProcess = Array.from(selectedGems);
+      // Fix: Use spread syntax for better type inference when converting Set to Array.
+      const gemsToProcess = [...selectedGems];
       const { docs, initialQuestion } = await aiProvider.generateDocumentation(gemfileContent, projectFilesContent, gemsToProcess);
       const sections = parseDocsToSections(docs);
       setDocSections(sections);
