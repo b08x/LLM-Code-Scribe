@@ -3,7 +3,6 @@ import { GoogleGenAI, GenerateContentResponse, Chat } from "@google/genai";
 import { IAiProvider, IChatSession, DocumentationResponse, ChatResponse, IAiProviderConfig, ValidationResult } from './provider';
 import { ChatMessage } from '../../components/ChatInterface';
 import { withRetry } from './utils';
-import { providers } from "../../config";
 
 const RUBY_TECHNICAL_ANALYSIS_PROMPT = `
 **Ruby Technical Analysis System Prompt (Enhanced Format)**
@@ -136,23 +135,47 @@ export class GeminiProvider implements IAiProvider {
 
     public static async validate(apiKey: string): Promise<ValidationResult> {
         try {
-            // A lightweight way to validate the key is to try initializing the client.
-            // The SDK doesn't have a simple listModels, and a generateContent call is heavier.
-            // For now, we'll assume initialization is enough, and return the hardcoded models.
-            const testAi = new GoogleGenAI({ apiKey });
-            if (!testAi) { throw new Error("Initialization failed."); }
-            
-            // To be more certain, a tiny API call would be needed, but for UX, this is often sufficient.
-            // We return the hardcoded list of models for this provider upon successful "validation".
-            const geminiModels = providers.find(p => p.key === 'gemini')?.models || [];
+            // Use the REST API to list available models and validate the key simultaneously.
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
 
-            return { success: true, models: geminiModels };
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: { message: `Request failed with status: ${response.status}` }}));
+                let message = errorData?.error?.message || `An unknown error occurred.`;
+
+                if (response.status === 400 && message.includes('API key not valid')) {
+                    message = 'The provided API key is not valid. Please check the key and try again.';
+                }
+                return { success: false, error: message };
+            }
+            
+            const data = await response.json();
+            
+            if (!data.models || !Array.isArray(data.models)) {
+                return { success: false, error: 'Received an invalid response when fetching models.' };
+            }
+            
+            const models = data.models
+                // Filter for models that support text generation.
+                .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
+                .map((m: any) => m.name.replace('models/', ''))
+                // Prefer 'pro' models and sort by name descending to show newer versions first.
+                .sort((a: string, b: string) => {
+                    const aIsPro = a.includes('pro');
+                    const bIsPro = b.includes('pro');
+                    if (aIsPro && !bIsPro) return -1;
+                    if (!aIsPro && bIsPro) return 1;
+                    return b.localeCompare(a); 
+                });
+
+            if (models.length === 0) {
+                return { success: false, error: "No text generation models found for this API key." };
+            }
+
+            return { success: true, models };
         } catch (error: any) {
             console.error("Gemini API Key validation failed:", error);
-            const message = error.message?.includes('API key not valid') 
-                ? 'The provided API key is not valid. Please check the key and try again.'
-                : `An error occurred during validation: ${error.message}`;
-            return { success: false, error: message };
+            // Catch network errors or other unexpected issues with fetch.
+            return { success: false, error: `An unexpected error occurred during validation: ${error.message}` };
         }
     }
 

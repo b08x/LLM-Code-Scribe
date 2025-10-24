@@ -11,8 +11,8 @@ export const providers: ProviderDetails[] = [
         key: 'gemini', 
         name: 'Google Gemini',
         models: [
-            "gemini-2.0-flash",
-            "gemini-pro",
+            "gemini-2.5-pro",
+            "gemini-flash-latest",
         ],
         defaultTemperature: 0.4,
     },
